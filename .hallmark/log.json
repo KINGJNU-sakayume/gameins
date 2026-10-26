@@ -1,0 +1,26 @@
+[
+ {
+  "scope": "app",
+  "shape": "app screen",
+  "theme": "formwork",
+  "axes": "mid/display-condensed/warm",
+  "hero": "none",
+  "nav": "ink top bar with workday and resource meter",
+  "footer": "none",
+  "imagery": "none, documents set in type",
+  "photos": [],
+  "entry": "queue table",
+  "sections": [
+   "queue",
+   "evidence list",
+   "document viewer",
+   "verdict sheet",
+   "result"
+  ],
+  "signature": "verdict sheet with rubber stamp",
+  "waived": [],
+  "prompt": "CLAIM DENIED cases 001 and 002 playable claims desk",
+  "date": "2026-10-26",
+  "mode": "build"
+ }
+]

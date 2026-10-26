@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사건함, CLAIM DENIED</title>
+  <meta name="description" content="손해사정 게임 CLAIM DENIED의 사건 #001, #002 플레이 프로토타입. 증거를 대조하고 판정서를 제출한다.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Archivo:wght@400;500&family=Archivo+Narrow:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <header class="bar">
+    <div class="container bar__in">
+      <a class="mark" href="#/queue" aria-label="NORTHSTAR 손해사정부, 사건함으로">NORTHSTAR <span>손해사정부</span></a>
+      <dl class="bar__stat">
+        <div><dt>근무일</dt><dd id="day" class="num">1일차</dd></div>
+        <div id="res-wrap"><dt>조사 자원</dt><dd id="res" class="num">10 / 10</dd></div>
+      </dl>
+      <button class="btn btn--secondary btn--s btn--onink" type="button" id="endday" data-act="endday">근무 종료</button>
+    </div>
+  </header>
+  <p class="visually-hidden" id="status" role="status" aria-live="polite"></p>
+  <main id="main">
+    <div class="container queue">
+      <div class="queue__head">
+        <h1>사건함</h1>
+        <p class="lead">판정은 약관과 기록으로 합니다.</p>
+      </div>
+      <table class="tbl">
+        <thead><tr><th scope="col">사건</th><th scope="col">청구인</th><th scope="col">상품</th><th scope="col" class="r">청구액</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">#001 휴대폰 액정 파손</th><td>오세린</td><td>NORTHSTAR 휴대폰 안심 특약</td><td class="num r">420,000원</td></tr>
+          <tr><th scope="row">#002 지하주차장 접촉 사고</th><td>강민수</td><td>NORTHSTAR 자기차량 손해 담보</td><td class="num r">1,350,000원</td></tr>
+        </tbody>
+      </table>
+      <noscript><p class="empty">사건을 열고 판정하려면 브라우저에서 스크립트를 켜야 합니다.</p></noscript>
+    </div>
+  </main>
+  <script src="cases.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
