@@ -4,7 +4,9 @@
 /* Hallmark · pre-emit critique: P4 H4 E4 S5 R4 V4 · weakest: P and H, a three-pane desk is the category default; the verdict sheet is cast as the one plate with the hard shadow so the eye always ends on the decision */
 /* Hallmark · dismissed F4 · the inked fills are selection states (a pinned toggle, the chosen decision, the current tab), the orange submit is the one primary */
 /* Hallmark · dismissed F25 · on a phone the evidence list and the verdict sheet sit behind the 증거 and 판정서 tabs, one tap away, not cut */
-/* Hallmark · finish-review: subagent · 5 findings · 5 resolved (phone queue rows, stamp inside the plate, sticky verdict sheet, status column air, amount locked until 지급) · gap: none */
+/* Hallmark · finish-review: subagent · 5 findings · 5 resolved (phone queue rows, stamp inside the plate, sticky verdict sheet, status column air, amount locked until 지급) · gap: none
+ * #003 added: itemized verdict table (보장, 면책 per damage item, covered subtotal), same tokens and seg control
+ * finish-review #003: subagent · recapture once (unseeded routes), then fix · 3 findings · 3 resolved (05:35 rain time, locked-rows hint, phone answer table) · gap: none */
 @import url("./tokens.css");
 @import url("./base.css");
 
@@ -138,7 +140,7 @@ h3 { font-size: var(--text-lg); text-transform: uppercase; }
 .seg { display: flex; margin: 0; padding: 0; border: 0; }
 .seg legend { font-size: var(--text-sm); color: var(--color-ink-2); margin-bottom: var(--space-2xs); padding: 0; }
 .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.seg label { flex: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--space-sm); border: 2px solid var(--color-ink); margin-left: calc(-1 * var(--space-3xs)); background: var(--color-paper-2); font-weight: 500; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
+.seg label { flex: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--space-sm); border: 2px solid var(--color-ink); margin-left: calc(-1 * var(--space-3xs)); background: var(--color-paper-2); font-weight: 500; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
 .seg label:first-of-type { margin-left: 0; }
 .seg label:hover { background: var(--color-plate); }
 .seg input:checked + label { background: var(--color-ink); color: var(--color-plate-ink); }
@@ -152,6 +154,18 @@ h3 { font-size: var(--text-lg); text-transform: uppercase; }
 .help { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
 .help--err { color: var(--color-ink); font-weight: 500; }
 .help--err:empty { min-height: 0; }
+/* 항목별 판정 (#003) */
+.items { display: grid; gap: var(--space-xs); margin: 0; padding: 0; border: 0; min-width: 0; }
+.items legend { font-size: var(--text-sm); color: var(--color-ink-2); margin-bottom: var(--space-2xs); padding: 0; }
+.items:disabled .seg { opacity: 0.55; cursor: not-allowed; }
+.items:disabled label { cursor: not-allowed; }
+.items .help:empty { display: none; }
+.items__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 8.5rem); gap: var(--space-xs); align-items: center; padding-bottom: var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-paper-3); }
+.items__l { display: grid; font-size: var(--text-sm); font-weight: 500; }
+.items__l .num { font-weight: 500; color: var(--color-ink-2); }
+.seg--s label { min-height: 36px; padding: 0 var(--space-xs); font-size: var(--text-sm); }
+.items__sum { display: flex; justify-content: space-between; gap: var(--space-sm); font-size: var(--text-sm); color: var(--color-ink-2); }
+.items__sum .num { font-size: var(--text-md); color: var(--color-ink); }
 .basis { display: grid; gap: var(--space-xs); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-paper-3); }
 .basis__l { font-size: var(--text-sm); color: var(--color-ink-2); }
 .basis ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2xs); }
@@ -212,5 +226,10 @@ h3 { font-size: var(--text-lg); text-transform: uppercase; }
   .queue .tbl td:nth-child(5) { grid-area: s; text-align: right; padding-left: 0; }
   .sheet, .verdict-form { padding: var(--space-md); }
   .verdict-form--done { padding-bottom: var(--space-3xl); }
+  .tbl--answer thead { display: none; }
+  .tbl--answer tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-2xs) var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair) solid var(--color-paper-3); }
+  .tbl--answer th, .tbl--answer td { padding: 0; border: 0; }
+  .tbl--answer td:nth-child(2), .tbl--answer td:nth-child(3) { white-space: nowrap; }
+  .tbl--answer td:nth-child(4) { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--color-ink-2); }
   .stamp { right: var(--space-md); bottom: var(--space-md); max-width: calc(100% - 2 * var(--space-md)); padding: var(--space-2xs) var(--space-sm); font-size: var(--text-md); }
 }

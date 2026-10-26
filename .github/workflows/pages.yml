@@ -1,0 +1,53 @@
+# prototype/ 폴더를 GitHub Pages로 배포한다.
+# 처음 한 번 저장소 Settings → Pages → Build and deployment → Source를 "GitHub Actions"로 바꿔야 한다.
+name: Deploy prototype to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prototype/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 사건 데이터가 콘텐츠 검증을 통과하지 못하면 배포하지 않는다.
+      - name: Validate case data
+        run: |
+          node -e "
+            global.window = {};
+            require('./prototype/cases.js');
+            const problems = window.validateCases(window.CASES);
+            if (problems.length) { console.error(problems.join('\n')); process.exit(1); }
+            console.log('cases ok:', window.CASES.map((c) => '#' + c.id).join(' '));
+          "
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: prototype
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

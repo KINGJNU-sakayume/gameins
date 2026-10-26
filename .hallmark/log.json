@@ -14,6 +14,30 @@
    "queue",
    "evidence list",
    "document viewer",
+   "verdict sheet with itemized table",
+   "result with answer table"
+  ],
+  "signature": "verdict sheet with rubber stamp",
+  "waived": [],
+  "prompt": "CLAIM DENIED add case 003 basement flood with itemized verdict",
+  "date": "2026-10-26",
+  "mode": "build"
+ },
+ {
+  "scope": "app",
+  "shape": "app screen",
+  "theme": "formwork",
+  "axes": "mid/display-condensed/warm",
+  "hero": "none",
+  "nav": "ink top bar with workday and resource meter",
+  "footer": "none",
+  "imagery": "none, documents set in type",
+  "photos": [],
+  "entry": "queue table",
+  "sections": [
+   "queue",
+   "evidence list",
+   "document viewer",
    "verdict sheet",
    "result"
   ],
