@@ -35,3 +35,8 @@ cd prototype && python3 -m http.server 8000
 
 [Hallmark](https://github.com/Nutlope/hallmark) 스킬의 app screen 범위로 만들었습니다. 테마는 Formwork(콘크리트 회색 종이, 검정 잉크, 각진 모서리, 하드 섀도, 안전 주황 한 가지)이고, 시그니처는 고정한 근거가 모이고 제출 시 도장이 찍히는 판정서입니다. `sloplint --scope app --render` 결과 FAIL 0입니다.
 
+## 배포 (GitHub Pages)
+
+`.github/workflows/pages.yml`이 `main`에 `prototype/` 변경이 들어오면 사건 데이터 검증을 돌린 뒤 GitHub Pages로 배포합니다. Actions 탭에서 수동 실행(workflow_dispatch)도 됩니다.
+
+처음 한 번만 저장소 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 바꿔야 합니다. 바꾸기 전에는 배포 단계가 실패합니다.
