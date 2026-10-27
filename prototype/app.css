@@ -1,6 +1,7 @@
 /* Hallmark · shape: app screen · genre: editorial · theme: Formwork (deal 2/3, seed insurance-claims-adjuster-game-7b51·fade6636·2026-10-26·r0)
  * nav: the counter window, an ink band with the intake ticket, case tickets, workday and resources · signature: unrotated papers piled on the desk that you drag side by side and clip to the verdict sheet, which takes the stamp · states: empty (no attachments, locked items), error (validator, form), waiting (envelope until next day), full · formwork: cast, with a desk surface and per-paper stocks
  * axes: mid/display-condensed/warm · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · cases #004-#005 add paper stocks: official (double rule, red seal), tape transcript, printed messenger screen, newsprint clipping; verdict sheet gains deny reasons and per-item allowed amounts */
 /* Hallmark · pre-emit critique: P5 H3 E4 S5 R3 V5 · weakest: H and R, a pile is noisy by nature; tidy button lays it flat, the verdict sheet stays fixed and is the only plate with the cast shadow */
 /* Hallmark · replaced the three-pane desk (ledger, viewer, sheet) with the unrotated paper desk after comparing it against a tilted pile; the case data and grading are unchanged */
 /* Hallmark · finish-review: subagent · 7 findings · 6 resolved (particles 과와 을를 이가, tray above the fold, phone jump bar to the sheet, veil over the pile after a verdict, three-column tidy) · 1 kept: 정답 stays as the design doc's grading word */
@@ -39,7 +40,7 @@ body { background: var(--color-desk-2); color: var(--color-desk-ink); word-break
 .ticket__no { grid-row: span 2; font: 700 var(--text-3xl)/1 var(--font-display); text-transform: uppercase; }
 .ticket__t { font-weight: 700; }
 .ticket__meta { font-size: var(--text-sm); }
-.cases { display: flex; gap: var(--space-xs); }
+.cases { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 .case-tab { display: grid; min-width: 4.5rem; padding: var(--space-2xs) var(--space-sm); border: 2px solid var(--color-desk-ink); color: var(--color-desk-ink); font-size: var(--text-sm); text-decoration: none; }
 .case-tab .num { font-size: var(--text-md); }
 .case-tab:hover { background: var(--color-ink-2); }
@@ -104,6 +105,29 @@ body { background: var(--color-desk-2); color: var(--color-desk-ink); word-break
 .doc--log { --w: 18rem; } .doc--log .paper { background: var(--color-thermal); border-inline: 6px dotted var(--color-sheet-rule); }
 .doc--report { --w: 19rem; } .doc--report .paper { border-top: 8px solid var(--color-ink); }
 .doc--book { --w: 21rem; } .doc--book .paper { background: var(--color-manila); border: 3px solid var(--color-ink-2); }
+/* 공문(신고 접수증, 수사 회신, 화재조사 보고서): 겹줄 테두리와 붉은 관인 */
+.doc--official { --w: 20rem; } .doc--official .paper { border: 1px solid var(--color-sheet-ink); outline: 1px solid var(--color-sheet-ink); outline-offset: -5px; padding: var(--space-lg) var(--space-md) var(--space-md); }
+.seal { justify-self: end; display: flex; align-items: center; gap: var(--space-xs); font-weight: 700; letter-spacing: 0.2em; pointer-events: none; }
+.seal__mark { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border: 3px solid var(--color-seal); color: var(--color-seal); font: 700 var(--text-md)/1 var(--font-body); transform: rotate(-8deg); }
+/* 녹취록: 시각·화자·발언 세 칸, 줄마다 괘선 */
+.doc--tape { --w: 21rem; } .doc--tape .paper { border-top: 8px double var(--color-sheet-ink); }
+.tape { display: grid; margin: 0; padding: 0; list-style: none; }
+.tape li { display: grid; grid-template-columns: 3rem 3.6rem minmax(0, 1fr); gap: var(--space-xs); padding: var(--space-2xs) 0; border-bottom: var(--rule-hair) dashed var(--color-sheet-rule); }
+.tape li > .num { font-size: var(--text-xs); padding-top: 0.15em; }
+/* 메신저 캡처 인쇄본: 보낸 쪽은 오른쪽 정렬과 테두리, 받은 쪽은 왼쪽 정렬과 채움 */
+.doc--screen { --w: 16rem; } .doc--screen .paper { background: var(--color-screen); border: 6px solid var(--color-ink-2); border-block-width: 16px; }
+.chat { display: grid; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
+.chat__b { max-width: 85%; padding: var(--space-xs) var(--space-sm); }
+.chat__b--them { justify-self: start; background: var(--color-sheet); }
+.chat__b--me { justify-self: end; text-align: right; border: 2px solid var(--color-sheet-ink); }
+.chat__who { display: block; font-size: var(--text-xs); font-weight: 500; }
+/* 신문 스크랩: 오려 낸 톱니 가장자리와 두 단 본문 */
+.doc--clipping { --w: 22rem; filter: drop-shadow(var(--drop-sheet)); }
+.doc--clipping .paper { background: var(--color-newsprint); box-shadow: none; clip-path: polygon(0 1%, 6% 0, 14% 1.5%, 23% 0, 35% 1%, 47% 0, 58% 1.5%, 70% 0, 82% 1%, 93% 0, 100% 1.2%, 99.4% 50%, 100% 98.6%, 90% 100%, 78% 98.8%, 64% 100%, 51% 98.5%, 38% 100%, 26% 98.8%, 13% 100%, 0 98.7%, 0.6% 50%); }
+.doc--clipping.is-lifted .paper { box-shadow: none; }
+.doc__headline { font: 700 var(--text-lg)/1.25 var(--font-body); padding-bottom: var(--space-xs); border-bottom: 2px solid var(--color-sheet-ink); }
+.doc--clipping .doc__body { display: block; columns: 2; column-gap: var(--space-md); column-rule: var(--rule-hair) solid var(--color-sheet-rule); }
+.doc--clipping .doc__body p + p { margin-top: var(--space-xs); }
 .doc--note { --w: 24rem; } .doc--note .paper { border-top: var(--rule-bar) solid var(--color-ink); }
 .note__label--partial, .note__label--wrong { text-decoration: underline var(--rule-bar) var(--color-accent-deep); text-underline-offset: 0.18em; }
 
@@ -127,7 +151,7 @@ body { background: var(--color-desk-2); color: var(--color-desk-ink); word-break
 /* ---------- 판정서 ---------- */
 .sheet-col { position: sticky; top: var(--space-lg); align-self: start; min-width: 0; }
 .sheet-col.is-target .vsheet { outline: 3px dashed var(--color-accent); outline-offset: 6px; }
-.vsheet { position: relative; display: grid; gap: var(--space-md); padding: var(--space-lg); background: var(--color-plate); color: var(--color-ink); border: var(--rule-bar) solid var(--color-ink); box-shadow: var(--shadow-card); overflow: clip; }
+.vsheet { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); padding: var(--space-lg); background: var(--color-plate); color: var(--color-ink); border: var(--rule-bar) solid var(--color-ink); box-shadow: var(--shadow-card); overflow: clip; }
 .vsheet h2 { font-size: var(--text-xl); text-transform: uppercase; }
 .vsheet__no { font-size: var(--text-sm); color: var(--color-ink-2); margin-top: calc(-1 * var(--space-xs)); }
 .vsheet--done { padding-bottom: var(--space-3xl); }
@@ -146,10 +170,22 @@ body { background: var(--color-desk-2); color: var(--color-desk-ink); word-break
 .items:disabled label { cursor: not-allowed; }
 .items__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 8rem); gap: var(--space-xs); align-items: center; padding-bottom: var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-paper-3); }
 .items__l { display: grid; font-size: var(--text-sm); font-weight: 500; }
+.items__allow { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 8rem); gap: var(--space-xs); align-items: center; font-size: var(--text-sm); }
+.items__allow label { color: var(--color-ink-2); }
+.items__allow input { min-height: 36px; min-width: 0; padding: 0 var(--space-xs); border: 2px solid var(--color-ink); border-radius: 0; background: var(--color-paper-2); color: var(--color-ink); font: 500 var(--text-md)/1 var(--font-outlier); text-align: right; }
+.items__allow input:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.items__allow input:disabled { opacity: 0.55; cursor: not-allowed; }
+.reasons { display: grid; gap: var(--space-2xs); margin: 0; padding: 0; border: 0; min-width: 0; }
+.reasons legend { font-size: var(--text-sm); color: var(--color-ink-2); margin-bottom: var(--space-2xs); padding: 0; }
+.reasons__r { display: flex; gap: var(--space-xs); align-items: center; min-height: 36px; padding: 0 var(--space-xs); border: 2px solid var(--color-ink); background: var(--color-paper-2); font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.reasons__r:hover { background: var(--color-plate-ink); }
+.reasons__r:has(input:checked) { background: var(--color-ink); color: var(--color-plate-ink); }
+.reasons__r:has(input:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.reasons__r input { accent-color: var(--color-accent); margin: 0; }
 .items__sum { display: flex; justify-content: space-between; font-size: var(--text-sm); }
 .field { display: grid; gap: var(--space-2xs); }
 .field label { font-size: var(--text-sm); color: var(--color-ink-2); }
-.field input { min-height: 40px; padding: 0 var(--space-sm); border: 2px solid var(--color-ink); border-radius: 0; background: var(--color-paper-2); color: var(--color-ink); font: 500 var(--text-lg)/1 var(--font-outlier); outline: 3px solid transparent; outline-offset: -5px; }
+.field input { min-width: 0; min-height: 40px; padding: 0 var(--space-sm); border: 2px solid var(--color-ink); border-radius: 0; background: var(--color-paper-2); color: var(--color-ink); font: 500 var(--text-lg)/1 var(--font-outlier); outline: 3px solid transparent; outline-offset: -5px; }
 .field input:focus-visible { outline-color: var(--color-focus); }
 .field input:disabled { opacity: 0.55; cursor: not-allowed; }
 .field input[aria-invalid="true"] { border-color: var(--color-error); }

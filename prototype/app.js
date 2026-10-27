@@ -8,6 +8,8 @@
     청구서: 'form', '청구서와 진술서': 'form', 계약서: 'contract', 사진: 'photo', 견적서: 'invoice', 명세서: 'invoice',
     영수증: 'receipt', 진술: 'memo', 메모: 'memo', '증인 진술': 'memo', '문의 응답': 'memo',
     '시스템 기록': 'log', '카메라 기록': 'log', CCTV: 'log', '순찰 일지': 'log', '기상 기록': 'log', '감정 보고': 'report',
+    '신고 접수증': 'official', '수사 회신': 'official', '화재조사 보고서': 'official', 녹취록: 'tape', 블랙박스: 'photo',
+    '메신저 캡처': 'screen', '신문 기사': 'clipping', 세금계산서: 'invoice',
   };
   const narrow = matchMedia('(max-width: 60rem)');
   const still = matchMedia('(prefers-reduced-motion: reduce)');
@@ -35,7 +37,11 @@
     return { day: 1, resources: DAILY, pending: [], z: 10, cases };
   }
   function load() {
-    try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(fresh(), JSON.parse(raw)); } catch (e) { /* 저장소 없음 */ }
+    try {
+      const raw = localStorage.getItem(KEY);
+      // 저장 뒤에 추가된 사건도 빈 상태로 채운다.
+      if (raw) { const base = fresh(), saved = JSON.parse(raw); return { ...base, ...saved, cases: { ...base.cases, ...saved.cases } }; }
+    } catch (e) { /* 저장소 없음 */ }
     return fresh();
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* 저장소 없음 */ } }
@@ -49,38 +55,59 @@
   const underminedBy = (c, cs, id) => c.evidence.filter((e) => (e.undermines || []).includes(id) && isOpen(c, cs, e.id));
 
   /* ---------- 채점: prototype/app.js 의 grade()와 같은 규칙 ---------- */
-  function grade(c, cs, decision, amount, choices) {
+  const allowedOf = (it) => it.allowed ?? it.amount;
+  const reasonOf = (c, id) => (c.denyReasons.find((r) => r.id === id) || {}).label || '';
+  // 필수 근거와 반증 근거가 판정서에 모두 있는지 본다.
+  function linkCheck(c, pins, notes) {
+    const missing = c.required.filter((id) => !pins.includes(id));
+    const rebutOk = !c.rebuttal.length || c.rebuttal.some((id) => pins.includes(id));
+    missing.forEach((id) => notes.push(`필수 근거 ${id} ${josa(evOf(c, id).title, '이', '가')} 판정서에 없습니다.`));
+    if (!rebutOk) notes.push(c.rebuttalNote);
+    if (!missing.length && rebutOk) return { label: '정답', tone: 'ok', notes };
+    return { label: '부분 정답, 근거 미연결', tone: 'partial', notes };
+  }
+
+  function grade(c, cs, decision, amount, choices, reason, allows) {
     const notes = [];
     const pins = cs.pins;
-    if (decision === 'deny') return { label: '오답', tone: 'wrong', notes: [c.denyNote] };
+    const denyCase = c.expectedDecision === 'deny';
     if (decision === 'hold') {
       if (c.holdOk({ pending: pendingFor(c.id) }))
         return { label: '정당한 보류', tone: 'ok', notes: ['요청한 자료가 도착하면 다시 판정할 수 있습니다. 정보가 부족할 때 보류는 합리적입니다.'] };
       if (!cs.used.length) return { label: '보류, 처리 효율 감점', tone: 'partial', notes: ['조사 없이 보류했습니다. 보류는 무엇을 기다리는지가 분명할 때 씁니다.'] };
+      if (c.holdNote && pendingFor(c.id).length) return { label: '보류, 기다리는 자료가 판정을 바꾸지 않음', tone: 'partial', notes: [c.holdNote] };
       return { label: '보류, 판단 근거는 이미 있음', tone: 'partial', notes: ['지금 가진 자료로 판정할 수 있었습니다.'] };
     }
+    if (denyCase) {
+      if (decision === 'pay') return { label: '오답', tone: 'wrong', notes: [c.payNote] };
+      if (reason !== c.denyReason) return { label: '부분 오답, 기각 사유 불일치', tone: 'partial', notes: [c.reasonNote] };
+      return linkCheck(c, pins, notes);
+    }
+    if (decision === 'deny') return { label: '오답', tone: 'wrong', notes: [c.denyNote] };
     if (c.itemized) {
       const wrong = c.items.filter((it, i) => choices[i] !== it.covered);
-      if (wrong.length && choices.every(Boolean)) return { label: '부분 오답, 원인 미분리', tone: 'partial', notes: [c.mergeNote] };
+      if (wrong.length && choices.every(Boolean)) return { label: `부분 오답, ${c.mergeLabel || '원인 미분리'}`, tone: 'partial', notes: [c.mergeNote] };
       if (wrong.length) {
         wrong.forEach((it) => notes.push(`${it.label}: ${it.covered ? '보장' : '면책'}입니다. ${it.why}.`));
         return { label: '오답, 항목 판정 불일치', tone: 'wrong', notes };
       }
+      if (c.adjust) {
+        const off = c.items.filter((it, i) => it.covered && allows[i] !== allowedOf(it));
+        if (off.length) {
+          off.forEach((it) => notes.push(`${it.label}: 인정액은 ${won(allowedOf(it))}입니다.`));
+          if (off.some((it) => it.allowed != null)) notes.push(c.adjustNote);
+          return { label: '부분 오답, 인정액 불일치', tone: 'partial', notes };
+        }
+      }
     }
-    if (amount === c.expectedPayout) {
-      const missing = c.required.filter((id) => !pins.includes(id));
-      const rebutOk = !c.rebuttal.length || c.rebuttal.some((id) => pins.includes(id));
-      missing.forEach((id) => notes.push(`필수 근거 ${id} ${josa(evOf(c, id).title, '이', '가')} 판정서에 없습니다.`));
-      if (!rebutOk) notes.push(c.rebuttalNote);
-      if (!missing.length && rebutOk) return { label: '정답', tone: 'ok', notes };
-      return { label: '부분 정답, 근거 미연결', tone: 'partial', notes };
-    }
+    if (amount === c.expectedPayout) return linkCheck(c, pins, notes);
     const gross = c.expectedPayout + c.deductible;
+    const basis = c.adjust ? '인정 합계' : c.itemized ? '보장 항목 합계' : '청구';
     if (amount === gross) {
-      notes.push(`자기부담금을 빼지 않았습니다. ${c.itemized ? '보장 항목 합계' : '청구'} ${won(gross)}에서 자기부담금 ${won(c.deductible)}을 빼야 합니다.`);
+      notes.push(`자기부담금을 빼지 않았습니다. ${basis} ${won(gross)}에서 자기부담금 ${won(c.deductible)}을 빼야 합니다.`);
       return { label: '부분 오답, 자기부담금 누락', tone: 'partial', notes };
     }
-    notes.push(`지급액은 ${c.itemized ? '보장 항목 합계' : '청구'} ${won(gross)}에서 자기부담금 ${won(c.deductible)}을 뺀 금액입니다.`);
+    notes.push(`지급액은 ${basis} ${won(gross)}에서 자기부담금 ${won(c.deductible)}을 뺀 금액입니다.`);
     return { label: '오답, 금액 불일치', tone: 'wrong', notes };
   }
 
@@ -100,12 +127,16 @@
 
   /* ---------- 서류 ---------- */
   function docBody(d) {
-    return `${d.meta ? `<dl class="kv">${d.meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
+    return `${d.headline ? `<p class="doc__headline">${esc(d.headline)}</p>` : ''}
+      ${d.meta ? `<dl class="kv">${d.meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
       ${d.table ? `<table class="dtbl"><thead><tr>${d.table.head.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead>
         <tbody>${d.table.rows.map((r) => `<tr>${r.map((v) => `<td${/원$/.test(v) ? ' class="num r"' : ''}>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
         ${d.table.foot ? `<tfoot><tr>${d.table.foot.map((v) => `<td${/원$/.test(v) ? ' class="num r"' : ''}>${esc(v)}</td>`).join('')}</tr></tfoot>` : ''}</table>` : ''}
       ${d.qa ? `<dl class="qa">${d.qa.map(([q, a]) => `<div><dt>${esc(q)}</dt><dd>${esc(a)}</dd></div>`).join('')}</dl>` : ''}
-      ${d.body ? `<div class="doc__body">${d.body.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}`;
+      ${d.transcript ? `<ol class="tape">${d.transcript.map(([t, who, line]) => `<li><span class="num">${esc(t)}</span><b>${esc(who)}</b><span>${esc(line)}</span></li>`).join('')}</ol>` : ''}
+      ${d.chat ? `<ol class="chat">${d.chat.map(([who, t, text, side]) => `<li class="chat__b chat__b--${side === 'me' ? 'me' : 'them'}"><span class="chat__who">${esc(who)} <span class="num">${esc(t)}</span></span>${esc(text)}</li>`).join('')}</ol>` : ''}
+      ${d.body ? `<div class="doc__body">${d.body.map((p) => `<p>${esc(p)}</p>`).join('')}</div>` : ''}
+      ${d.stamp ? `<p class="seal"><span class="visually-hidden">관인: </span><span>${esc(d.stamp)}</span><span class="seal__mark" aria-hidden="true">인</span></p>` : ''}`;
   }
 
   function renderDoc(c, cs, e) {
@@ -140,8 +171,10 @@
         ${r.notes.length ? `<ul class="notes">${r.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
         <div class="doc__body"><p>${esc(c.explanation)}</p></div>
         ${c.itemized ? `<table class="dtbl"><thead><tr><th scope="col">항목</th><th scope="col">판정</th></tr></thead>
-          <tbody>${c.items.map((it) => `<tr><td>${esc(it.label)}<span class="sub">${esc(it.why)}</span></td><td>${it.covered ? '보장' : '면책'}</td></tr>`).join('')}</tbody></table>` : ''}
-        <dl class="kv"><div><dt>정답 지급액</dt><dd class="num">${won(c.expectedPayout)}</dd></div><div><dt>쓴 자원</dt><dd class="num">${S.cases[c.id].spent}</dd></div></dl>
+          <tbody>${c.items.map((it) => `<tr><td>${esc(it.label)}<span class="sub">${esc(it.why)}</span></td><td>${it.covered ? '보장' : '면책'}${c.adjust && it.covered ? `<span class="sub num">${won(allowedOf(it))}</span>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
+        <dl class="kv">${c.expectedDecision === 'deny'
+          ? `<div><dt>정답 결정</dt><dd>기각, ${esc(reasonOf(c, c.denyReason))}</dd></div>`
+          : `<div><dt>정답 지급액</dt><dd class="num">${won(c.expectedPayout)}</dd></div>`}<div><dt>쓴 자원</dt><dd class="num">${S.cases[c.id].spent}</dd></div></dl>
         <footer class="doc__foot"><button class="clip" type="button" data-act="replay">이 사건 다시 하기</button></footer>
       </div>
     </article>`;
@@ -249,8 +282,14 @@
   }
 
   /* ---------- 판정서 ---------- */
-  function coveredSum(c, picks) {
-    return c.items.reduce((n, it, i) => n + (picks[i] === 'y' ? it.amount : 0), 0);
+  const digitsOf = (v) => String(v || '').replace(/[^\d]/g, '');
+  // 인정액을 적는 사건은 적은 금액을, 아니면 청구액을 더한다.
+  function coveredSum(c, picks, allows = []) {
+    return c.items.reduce((n, it, i) => {
+      if (picks[i] !== 'y') return n;
+      const v = c.adjust ? digitsOf(allows[i]) : '';
+      return n + (v ? Number(v) : it.amount);
+    }, 0);
   }
   function renderVerdict(c) {
     const cs = S.cases[c.id];
@@ -265,7 +304,8 @@
       $('#verdict').innerHTML = `<div class="vsheet vsheet--done">
         <h2>#${c.id} 판정서</h2>
         <dl class="kv"><div><dt>결정</dt><dd>${DECISIONS[r.decision]}</dd></div>
-          ${r.decision === 'pay' && c.itemized ? `<div><dt>항목</dt><dd>${c.items.map((it, i) => `${esc(it.label)}: ${r.choices[i] ? '보장' : '면책'}`).join('<br>')}</dd></div>` : ''}
+          ${r.decision === 'deny' ? `<div><dt>사유</dt><dd>${esc(reasonOf(c, r.reason))}</dd></div>` : ''}
+          ${r.decision === 'pay' && c.itemized ? `<div><dt>항목</dt><dd>${c.items.map((it, i) => `${esc(it.label)}: ${r.choices[i] ? '보장' : '면책'}${c.adjust && r.choices[i] ? ` <span class="num">${won(r.allows[i])}</span>` : ''}`).join('<br>')}</dd></div>` : ''}
           ${r.decision === 'pay' ? `<div><dt>지급액</dt><dd class="num">${won(r.amount)}</dd></div>` : ''}</dl>
         ${stack}
         <p class="stamp" aria-label="도장: ${STAMPS[r.decision]}"><span>${STAMPS[r.decision]}</span></p>
@@ -274,6 +314,7 @@
     }
     const d = cs.draft;
     const picks = d.items || [];
+    const allows = d.allows || [];
     const off = d.decision !== 'pay';
     $('#verdict').innerHTML = `<form class="vsheet" data-act="submit" novalidate>
       <h2>판정서</h2>
@@ -281,14 +322,18 @@
       <fieldset class="seg"><legend>결정</legend>
         ${Object.entries(DECISIONS).map(([k, l]) => `<input type="radio" name="decision" id="d-${k}" value="${k}"${d.decision === k ? ' checked' : ''}><label for="d-${k}">${l}</label>`).join('')}
       </fieldset>
+      ${d.decision === 'deny' ? `<fieldset class="reasons"><legend>기각 사유</legend>
+        ${c.denyReasons.map((x) => `<label class="reasons__r"><input type="radio" name="reason" value="${x.id}"${d.reason === x.id ? ' checked' : ''}><span>${esc(x.label)}</span></label>`).join('')}
+      </fieldset>` : ''}
       ${c.itemized ? `<fieldset class="items"${off ? ' disabled' : ''}><legend>항목별 판정</legend>
         ${off ? '<p class="help">지급을 고르면 항목별로 판정합니다.</p>' : ''}
         ${c.items.map((it, i) => `<div class="items__row"><p class="items__l">${esc(it.label)}<span class="num">${won(it.amount)}</span></p>
           <div class="seg seg--s" role="radiogroup" aria-label="${esc(it.label)}">
             <input type="radio" name="item-${i}" id="i${i}-y" value="y"${picks[i] === 'y' ? ' checked' : ''}><label for="i${i}-y">보장</label>
             <input type="radio" name="item-${i}" id="i${i}-n" value="n"${picks[i] === 'n' ? ' checked' : ''}><label for="i${i}-n">면책</label>
-          </div></div>`).join('')}
-        <p class="items__sum">보장 항목 소계 <span class="num" id="covered-sum">${won(coveredSum(c, picks))}</span></p>
+          </div>
+          ${c.adjust ? `<div class="items__allow"><label for="a${i}">인정액 (원)</label><input id="a${i}" name="allow-${i}" type="text" inputmode="numeric" autocomplete="off" value="${esc(allows[i] || it.amount.toLocaleString('ko-KR'))}"${picks[i] === 'n' ? ' disabled' : ''}></div>` : ''}</div>`).join('')}
+        <p class="items__sum">${c.adjust ? '인정 합계' : '보장 항목 소계'} <span class="num" id="covered-sum">${won(coveredSum(c, picks, allows))}</span></p>
       </fieldset>` : ''}
       <div class="field"><label for="amount">지급액 (원)</label>
         <input id="amount" name="amount" type="text" inputmode="numeric" autocomplete="off" value="${d.amount ? esc(d.amount) : ''}"${off ? ' disabled' : ''}></div>
@@ -311,7 +356,13 @@
     const f = $('form.vsheet');
     if (!f) return;
     const d = new FormData(f);
-    S.cases[c.id].draft = { decision: d.get('decision') || '', amount: d.get('amount') || '', items: c.items.map((_, i) => d.get(`item-${i}`) || '') };
+    const prev = S.cases[c.id].draft;
+    S.cases[c.id].draft = {
+      decision: d.get('decision') || '', amount: d.get('amount') || '', reason: d.get('reason') || prev.reason || '',
+      items: c.items.map((_, i) => d.get(`item-${i}`) || ''),
+      // 면책으로 잠긴 인정액 칸은 FormData에 없으므로 앞서 적은 값을 지킨다.
+      allows: c.items.map((_, i) => d.get(`allow-${i}`) ?? (prev.allows || [])[i] ?? ''),
+    };
   }
 
   /* ---------- 행동 ---------- */
@@ -375,7 +426,12 @@
     const c = cur();
     if (!ev.target.closest('form.vsheet')) return;
     keepDraft(c); save();
-    if (/^item-/.test(ev.target.name)) { $('#covered-sum').textContent = won(coveredSum(c, S.cases[c.id].draft.items)); return; }
+    const d = S.cases[c.id].draft;
+    if (/^item-/.test(ev.target.name) && c.adjust) {
+      const i = ev.target.name.slice(5);
+      $(`#a${i}`).disabled = ev.target.value === 'n';
+    }
+    if (/^(item|allow)-/.test(ev.target.name)) { $('#covered-sum').textContent = won(coveredSum(c, d.items, d.allows)); return; }
     if (ev.target.name === 'decision') renderVerdict(c);
   });
 
@@ -389,18 +445,27 @@
     const fd = new FormData(f);
     const decision = fd.get('decision');
     if (!decision) { err.textContent = '결정을 고르세요. 지급, 기각, 보류 중 하나입니다.'; $('#d-pay').focus(); return; }
-    let amount = null, choices = null;
+    let amount = null, choices = null, reason = null, allows = null;
+    if (decision === 'deny') {
+      reason = fd.get('reason');
+      if (!reason) { err.textContent = '기각 사유를 고르세요.'; $('input[name="reason"]').focus(); return; }
+    }
     if (decision === 'pay' && c.itemized) {
       const miss = c.items.findIndex((_, i) => !fd.get(`item-${i}`));
       if (miss >= 0) { err.textContent = `${c.items[miss].label}의 보장, 면책을 고르세요.`; $(`#i${miss}-y`).focus(); return; }
       choices = c.items.map((_, i) => fd.get(`item-${i}`) === 'y');
+      if (c.adjust) {
+        const bad = c.items.findIndex((_, i) => choices[i] && !digitsOf(fd.get(`allow-${i}`)));
+        if (bad >= 0) { err.textContent = `${c.items[bad].label}의 인정액을 숫자로 적으세요.`; $(`#a${bad}`).focus(); return; }
+        allows = c.items.map((_, i) => (choices[i] ? Number(digitsOf(fd.get(`allow-${i}`))) : 0));
+      }
     }
     if (decision === 'pay') {
-      const digits = String(fd.get('amount') || '').replace(/[^\d]/g, '');
+      const digits = digitsOf(fd.get('amount'));
       if (!digits) { err.textContent = '지급액을 숫자로 적으세요.'; $('#amount').setAttribute('aria-invalid', 'true'); $('#amount').focus(); return; }
       amount = Number(digits);
     }
-    cs.result = { decision, amount, choices, pins: cs.pins.slice(), day: S.day, ...grade(c, cs, decision, amount, choices) };
+    cs.result = { decision, amount, choices, reason, allows, pins: cs.pins.slice(), day: S.day, ...grade(c, cs, decision, amount, choices, reason, allows) };
     cs.draft = {};
     delete cs.pos.note;
     S.z += 1; // 막이 쓸 자리

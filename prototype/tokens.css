@@ -23,6 +23,8 @@
   --color-desk: oklch(31% 0.018 60); --color-desk-2: oklch(26% 0.016 60); --color-desk-ink: oklch(93% 0.008 80);
   --color-sheet: oklch(95% 0.008 85); --color-sheet-ink: oklch(20% 0.006 270); --color-sheet-rule: oklch(80% 0.01 85);
   --color-memo: oklch(91% 0.075 95); --color-thermal: oklch(97% 0.004 250); --color-manila: oklch(85% 0.045 80); --color-form: oklch(92% 0.025 160);
+  --color-newsprint: oklch(89% 0.018 85); --color-screen: oklch(90% 0.006 250); --color-seal: oklch(50% 0.19 27);
   --shadow-sheet: 3px 4px 0 oklch(15% 0.01 60 / 0.55);
+  --drop-sheet: 3px 4px 0 oklch(15% 0.01 60 / 0.55);
   --shadow-lift: 8px 12px 0 oklch(15% 0.01 60 / 0.45);
 }
